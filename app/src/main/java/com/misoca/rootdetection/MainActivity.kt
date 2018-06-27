@@ -35,27 +35,28 @@ class MainActivity : AppCompatActivity() {
         if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS) {
             val nonceData = "なんすなんすなんす: " + System.currentTimeMillis()
             val nonce = getRequestNonce(nonceData)
-            val task = SafetyNet.getClient(this).attest(nonce, BuildConfig.API_KEY)
-            task.addOnSuccessListener(this, { attestationResponse :SafetyNetApi.AttestationResponse ->
-                val jwtSplit = attestationResponse.jwsResult.split(".")
-                // jwt[0]=header jwt[1]=body jwt[2]= signature
-                val jwtBody = String(Base64.decode(jwtSplit[1], Base64.DEFAULT))
-                val jwtBodyJson = JSONObject(jwtBody)
-                val ctsProfileMatch = jwtBodyJson.getBoolean("ctsProfileMatch")
-                val basicIntegrity = jwtBodyJson.getBoolean("basicIntegrity")
-                var result = "Root detect:${if (!ctsProfileMatch && !basicIntegrity) "detection" else "None"}\n"
-                result += "${jwtBodyJson.toString(4)}"
-                text.text = result
-            })
-            .addOnFailureListener(this, {e ->
-                if (e is ApiException) {
-                    // An error with the Google Play Services API contains some additional details.
-                    text.text = "Error: ${CommonStatusCodes.getStatusCodeString(e.statusCode)}:${e.statusMessage}"
-                } else {
-                    // A different, unknown type of error occurred.
-                    text.text = "ERROR! ${e.message}"
-                }
-            })
+            SafetyNet.getClient(this).attest(nonce, BuildConfig.API_KEY).run {
+                addOnSuccessListener(this@MainActivity, { attestationResponse: SafetyNetApi.AttestationResponse ->
+                    val jwtSplit = attestationResponse.jwsResult.split(".")
+                    // jwt[0]=header jwt[1]=body jwt[2]= signature
+                    val jwtBody = String(Base64.decode(jwtSplit[1], Base64.DEFAULT))
+                    val jwtBodyJson = JSONObject(jwtBody)
+                    val ctsProfileMatch = jwtBodyJson.getBoolean("ctsProfileMatch")
+                    val basicIntegrity = jwtBodyJson.getBoolean("basicIntegrity")
+                    var result = "Root detect:${if (!ctsProfileMatch && !basicIntegrity) "detection" else "None"}\n"
+                    result += "${jwtBodyJson.toString(4)}"
+                    text.text = result
+                })
+                addOnFailureListener(this@MainActivity, { e ->
+                    if (e is ApiException) {
+                        // An error with the Google Play Services API contains some additional details.
+                        text.text = "Error: ${CommonStatusCodes.getStatusCodeString(e.statusCode)}:${e.statusMessage}"
+                    } else {
+                        // A different, unknown type of error occurred.
+                        text.text = "ERROR! ${e.message}"
+                    }
+                })
+            }
         } else {
             text.text = "Google Play開発者サービスが古いから更新してね☆"
         }
