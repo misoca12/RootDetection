@@ -1,0 +1,21 @@
+# Local configuration file
+local.properties
+
+# Eclipse project files
+.classpath
+.project
+
+# Intellij project files
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Android Studio files
+.gradle/
+/build
+/captures
+.externalNativeBuild
+
+# Mac OS .DS_Store file
+.DS_Store
